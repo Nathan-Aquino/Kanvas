@@ -1,13 +1,15 @@
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate
+from django.shortcuts import get_object_or_404
 from kanvas_app.models import Course
-from kanvas_app.serializers import CourseSerializer, UserSerializer
+from kanvas_app.permissions import OnlyInstructor
+from kanvas_app.serializers import CourseSerializer, UserListSerializer, UserSerializer
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.authtoken.models import Token
 from rest_framework.authentication import TokenAuthentication
-from kanvas_app.permissions import OnlyInstructor
+import ipdb
 
 
 class AccountsView(APIView):
@@ -59,4 +61,30 @@ class CourseView(APIView):
         return Response(serializer.data)
     
     def put(self, request, course_id = ''):
-        ...
+        course = get_object_or_404(Course, id=course_id)
+
+        serializer = UserListSerializer(data=request.data)
+
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        users = serializer.validated_data.pop('user_ids')
+
+        for user in users:
+            try:
+                student = User.objects.get(id=user)
+            except User.DoesNotExist:
+                return Response({"errors": "invalid user_id list"}, status=status.HTTP_400_BAD_REQUEST)
+
+            if student.is_staff == False and student.is_superuser == False:
+                continue
+            else:
+                return Response({ "errors": "Only students can be enrolled in the course."}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # for user in users:
+        course.users.set(users)
+
+        serializer = CourseSerializer(course)
+        #ipdb.set_trace()
+
+        return Response(serializer.data)
