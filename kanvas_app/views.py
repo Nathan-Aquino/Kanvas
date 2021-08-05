@@ -12,5 +12,14 @@ class AccountsView(APIView):
         if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         
-        if User.objects.filter(username=serializer.validated_data['username']).exist():
+        if User.objects.filter(username=serializer.validated_data['username']).exists():
             return Response({'error':'user already exist!'},status=status.HTTP_409_CONFLICT)
+
+        user = User.objects.create_user(**serializer.validated_data)
+
+        serializer = UserSerializer(user)
+
+        return Response(serializer.data)
+
+class LoginView(APIView):
+    ...
