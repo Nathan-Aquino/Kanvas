@@ -58,10 +58,14 @@ class CourseView(APIView):
 
         serializer = CourseSerializer(course)
 
-        return Response(serializer.data)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
     
     def put(self, request, course_id = ''):
-        course = get_object_or_404(Course, id=course_id)
+        # course = get_object_or_404(Course, id=course_id)
+        try:
+            course = Course.objects.get(id=course_id)
+        except Course.DoesNotExist:
+            return Response({"errors": "invalid course_id"}, status=status.HTTP_404_NOT_FOUND)
 
         serializer = UserListSerializer(data=request.data)
 
@@ -87,4 +91,4 @@ class CourseView(APIView):
         serializer = CourseSerializer(course)
         #ipdb.set_trace()
 
-        return Response(serializer.data)
+        return Response(serializer.data, status=status.HTTP_200_OK)
