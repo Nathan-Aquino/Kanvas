@@ -48,6 +48,21 @@ class CourseView(APIView):
     authentication_classes = [TokenAuthentication]
     permission_classes = [OnlyInstructor]
 
+    def get(self, request, course_id = ''):
+        if course_id:
+            # course = get_object_or_404(Course, id=course_id)
+            try:
+                course = Course.objects.get(id=course_id)
+            except Course.DoesNotExist:
+                return Response({"errors": "invalid course_id"}, status=status.HTTP_404_NOT_FOUND)
+        
+        course = Course.objects.all()
+
+        serializer = CourseSerializer(course, many=True)
+        # ipdb.set_trace()
+
+        return Response(serializer.data, status=status.HTTP_200_OK)
+        
     def post(self, request):
         serializer = CourseSerializer(data=request.data)
 
@@ -85,10 +100,16 @@ class CourseView(APIView):
             else:
                 return Response({ "errors": "Only students can be enrolled in the course."}, status=status.HTTP_400_BAD_REQUEST)
         
-        # for user in users:
         course.users.set(users)
 
         serializer = CourseSerializer(course)
-        #ipdb.set_trace()
 
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def delete(self, request, course_id = ''):
+        try:
+            course = Course.objects.get(id=course_id)
+            course.delete()
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        except:
+            return Response(status=status.HTTP_404_NOT_FOUND)
