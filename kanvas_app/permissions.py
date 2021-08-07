@@ -3,4 +3,4 @@ import ipdb
 
 class OnlyInstructor(BasePermission):
     def has_permission(self, request, view):
-        return request.user.is_superuser 
+        return bool(request.user.is_superuser or request.method in SAFE_METHODS)
