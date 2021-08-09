@@ -1,12 +1,12 @@
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate
 from django.shortcuts import get_object_or_404
-from kanvas_app.models import Course
-from kanvas_app.permissions import OnlyInstructor
-from kanvas_app.serializers import CourseSerializer, UserListSerializer, UserSerializer
+from kanvas_app.models import Activities, Course, Submissions
+from kanvas_app.permissions import OnlyInstructor, InstructorAndStaffs
+from kanvas_app.serializers import ActivitiesSerializer, CourseSerializer, EstudentSubmissionSerializer, SubmissionsSerializer, UserListSerializer, UserSerializer
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework import status
+from rest_framework import serializers, status
 from rest_framework.authtoken.models import Token
 from rest_framework.authentication import TokenAuthentication
 import ipdb
@@ -59,7 +59,6 @@ class CourseView(APIView):
         course = Course.objects.all()
 
         serializer = CourseSerializer(course, many=True)
-        # ipdb.set_trace()
 
         return Response(serializer.data, status=status.HTTP_200_OK)
         
@@ -113,3 +112,56 @@ class CourseView(APIView):
             return Response(status=status.HTTP_204_NO_CONTENT)
         except:
             return Response(status=status.HTTP_404_NOT_FOUND)
+
+class ActivitiesView(APIView):
+    
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [InstructorAndStaffs]
+
+    def get(self, request):
+        activities = Activities.objects.all()
+
+        serializer = ActivitiesSerializer(activities, many=True)
+
+        ipdb.set_trace()
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def post(self, request):
+        serializer = ActivitiesSerializer(data=request.data)
+
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
+        activity = Activities.objects.get_or_create(**serializer.validated_data)[0]
+
+        serializer = ActivitiesSerializer(activity)
+
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+class SubmissionsView(APIView):
+
+    authentication_classes = [TokenAuthentication]
+
+    def post(self, request, activity_id = ''):
+        serializer = EstudentSubmissionSerializer(data=request.data)
+
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
+        repo = serializer.validated_data.pop('repo')
+
+        user_id = request.user
+
+        activity_id = Activities.objects.get(id=activity_id)
+
+        data = {
+            'repo': repo,
+            'user_id':user_id,
+            'activity_id':activity_id
+        }
+
+        submission = Submissions.objects.create(**data)
+
+        serializer = SubmissionsSerializer(submission)
+
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
