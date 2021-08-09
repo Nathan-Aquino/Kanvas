@@ -18,3 +18,20 @@ class CourseSerializer(serializers.Serializer):
 
 class UserListSerializer(serializers.Serializer):
     user_ids = serializers.ListField()
+
+class SubmissionsSerializer(serializers.Serializer):
+    id = serializers.IntegerField(read_only=True)
+    grade = serializers.IntegerField(allow_null=True)
+    repo = serializers.CharField()
+    user_id = serializers.IntegerField()
+    activity_id = serializers.IntegerField()
+
+class EstudentSubmissionSerializer(serializers.Serializer):
+    grade = serializers.IntegerField(allow_null=True)
+    repo = serializers.CharField()
+
+class ActivitiesSerializer(serializers.Serializer):
+    id = serializers.IntegerField(read_only=True)
+    title = serializers.CharField()
+    points = serializers.IntegerField()
+    submissions = SubmissionsSerializer(many=True, required=False)
