@@ -30,6 +30,9 @@ class EstudentSubmissionSerializer(serializers.Serializer):
     grade = serializers.IntegerField(allow_null=True)
     repo = serializers.CharField()
 
+class GradeSubmissionSerializer(serializers.Serializer):
+    grade = serializers.IntegerField()
+
 class ActivitiesSerializer(serializers.Serializer):
     id = serializers.IntegerField(read_only=True)
     title = serializers.CharField()
